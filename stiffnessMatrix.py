@@ -1,6 +1,5 @@
 import numpy as np
-from całka import *
-from całka import test
+from integral import *
 import math
 
 def form (ksi_eta_table, x_y_table, k):
@@ -73,7 +72,7 @@ def form (ksi_eta_table, x_y_table, k):
         #print(f"Jakobian odwrócony \n {matrix_Jakobian1}")
 
         #print(matrix)
-        for j in range(0,4):
+        for j in range(0, 4):
             Ni_x_in_row = (matrix_Jakobian1[0][0] * Ni_eta[j] + matrix_Jakobian1[1][0] * Ni_ksi[j])
             Ni_y_in_row = (matrix_Jakobian1[0][1] * Ni_eta[j] + matrix_Jakobian1[1][1] * Ni_ksi[j])
             Ni_x[i][j] = Ni_x_in_row
@@ -104,30 +103,12 @@ def form (ksi_eta_table, x_y_table, k):
     if(size_of_global_data == 4):
         #H += (H_pkt_x + H_pkt_y)
         H = integral_4_elements(H_map, 1.0)
-        print(f"Size of global data! {size_of_global_data}")
     if(size_of_global_data == 9):
         H = integral_9_elements(H_map, 5.0/9.0, 8.0/9.0)
-        print(f"Size of global data! {size_of_global_data}")
 
         #print(f"\n\n\n H dla {pkt} \n{(H_pkt_x + H_pkt_y) * 30.0 * det}")
         #print(f"Macierz H  dla punktu nr {pkt} \n{H_pkt_x}")
         #print(f"Macierz H x dla punktu nr {pkt} \n{H_pkt_y}")
 
-    print(f"\n\n\nMacierz H \n{H}")
+    print(f"\n\n\nMatrix H \n{H}")
     return H
-
-
-def test2():
-    #net = net_4_element(0.577)
-    #net = [[-0.577, -0.577], [0.577, -0.577], [0.577, 0.577], [-0.577, 0.577]]
-    net = [[-1.0/math.sqrt(3), -1.0/math.sqrt(3)], [1.0/math.sqrt(3), -1.0/math.sqrt(3)], [1.0/math.sqrt(3), 1.0/math.sqrt(3)], [-1.0/math.sqrt(3), 1.0/math.sqrt(3)]]
-    #x_y = [[0.0,0.0], [4.0,0.0], [4.0,4.0], [0.0,4.0]]
-    #net = [[-0.577, -0.577], [-0.577, 0.577], [0.577, 0.577], [0.577, -0.577]]
-    x_y = [[0.0, 0.0], [4.0, 0.0],[4.0, 6.0], [0.0, 6.0]]
-    #x_y = [[0.0, 0.0], [0.025, 0.0], [0.025, 0.025], [0.0, 0.025]]
-    form(net, x_y)
-
-if __name__ == "__main__":
-    test2()
-
-

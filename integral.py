@@ -1,4 +1,4 @@
-from siatka import *
+from net import *
 import math
 
 class net_4_elements():
@@ -55,25 +55,4 @@ def integral_9_elements(values, weight_1, weight_2):
         result += values[number] * weight_1 * weight_2
     result += values[4] * weight_2 ** 2
     return result
-
-
-def test():
-    path = r"dane.txt"
-    with open(path, "r") as file:
-        data = file.read()
-        file.close()
-
-    data_table = data.split("\n")
-
-    equation = lambda x, y : eval(data_table[4])
-
-    net = net_9_elements(0.77)
-    res = net.integral_9_elements(equation, 5.0/9.0, 8.0/9.0)
-    print("for 9 elements {}".format(res))
-
-    net_4 = net_4_elements(-1.0/math.sqrt(3))
-    res_4 = net_4.integral_4_elements(equation, 1.0)
-    print("for 4 elements {}".format(res_4))
-
-
 

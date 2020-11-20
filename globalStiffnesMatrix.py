@@ -1,5 +1,5 @@
-from ksztalt import *
-from siatka import *
+from stiffnessMatrix import *
+from net import *
 import numpy as np
 import math
 
@@ -11,20 +11,22 @@ class SOE():
         self.Pg = 0
         self.t = 0
         self.k = 0
+        self.pointsNumber = 0
 
     def read(self):
-        sciezka = r"dane.txt"
-        with open(sciezka, "r") as plik:
-            dane = plik.read()
-            plik.close()
+        path = r"data.txt"
+        with open(path, "r") as file:
+            data = file.read()
+            file.close()
 
-        tablica = dane.split("\n")
+        table = data.split("\n")
 
-        tablica_danych = [float(element) for element in tablica[:4]]
+        net_table = [float(element) for element in table[:4]]
 
-        s = siatka(tablica_danych[0], tablica_danych[1], int(tablica_danych[2]), int(tablica_danych[3]))
+        s = net(net_table[0], net_table[1], int(net_table[2]), int(net_table[3]))
 
-        self.k = float(tablica[6])
+        self.k = float(table[4])
+        self.pointsNumber = int(table[5])
         return s
 
     def initHg(self):
@@ -33,18 +35,19 @@ class SOE():
 
     def calculateHg(self):
         net = self.read()
+        if (self.pointsNumber == 4):
+            net_lok = net_4_elements(-1.0 / math.sqrt(3))
+        elif (self.pointsNumber == 9):
+            net_lok = net_9_elements(math.sqrt(3.0 / 5.0))
+        else:
+            raise ValueError
+
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
 
-            net_lok = [[-1.0 / math.sqrt(3), -1.0 / math.sqrt(3)], [1.0 / math.sqrt(3), -1.0 / math.sqrt(3)],
-                   [1.0 / math.sqrt(3), 1.0 / math.sqrt(3)], [-1.0 / math.sqrt(3), 1.0 / math.sqrt(3)]]
-
-            net_lok_9 = net_9_elements(math.sqrt(3.0/5.0))
-            #print(net_lok_9.net)
-
-            H = form(net_lok_9.net, net_glob, self.k)
+            H = form(net_lok.net, net_glob, self.k)
 
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):

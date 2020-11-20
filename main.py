@@ -1,10 +1,14 @@
 # This is a sample Python script.
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy
 
+"""
+Edyta Mróz https://github.com/malinowakrew/FEM/
+"""
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-from macierz_sztywnosci import *
+from globalStiffnesMatrix import *
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -20,14 +24,9 @@ if __name__ == '__main__':
     klasa.initHg()
 
     H = pd.DataFrame(klasa.Hg)
-
-
-
-    #H.to_csv("Hh.csv")
-
     plt.pcolor(H.reindex(index=H.index[::-1]))
-    plt.yticks(np.arange(0.5, len(H.index), 1), H.index)
-    plt.xticks(np.arange(0.5, len(H.columns), 1), H.columns)
+    #plt.yticks(np.arange(0.5, len(H.index), 1), H.index)
+    #plt.xticks(np.arange(0.5, len(H.columns), 1), H.columns)
     plt.show()
 
     print(H)
