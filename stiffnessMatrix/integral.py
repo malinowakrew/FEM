@@ -1,6 +1,3 @@
-from net import *
-import math
-
 class net_4_elements():
     def __init__ (self, delta):
         self.net = self.net_ksi_eta(delta)

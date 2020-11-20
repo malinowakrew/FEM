@@ -1,5 +1,4 @@
-from stiffnessMatrix import *
-from net import *
+from stiffnessMatrix.net import *
 import numpy as np
 import math
 
@@ -14,7 +13,7 @@ class SOE():
         self.pointsNumber = 0
 
     def read(self):
-        path = r"data.txt"
+        path = r"../data/data.txt"
         with open(path, "r") as file:
             data = file.read()
             file.close()

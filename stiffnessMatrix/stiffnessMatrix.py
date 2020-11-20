@@ -1,6 +1,6 @@
 import numpy as np
-from integral import *
-import math
+from stiffnessMatrix.integral import *
+
 
 def form (ksi_eta_table, x_y_table, k):
     """"
