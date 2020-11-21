@@ -2,13 +2,14 @@ from stiffnessMatrix.net import *
 from stiffnessMatrix.integral import *
 from stiffnessMatrix.stiffnessMatrix import *
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import math
 
 class SOE():
-    def __init__ (self):
-        self.macierzrobocza = []
-        self.nodes =self.initHg()
-        self.Hg = np.zeros((self.nodes, self.nodes)) # to zmienić
+    def __init__(self) -> None:
+        self.nodes = self.initHg()
+        self.Hg = np.zeros((self.nodes, self.nodes))
         self.Pg = 0
         self.t = 0
         self.k = 0
@@ -54,3 +55,9 @@ class SOE():
                 for itemNumber, value in enumerate(row):
                     self.Hg[elem[rowNumber]][elem[itemNumber]] += value
 
+    def drawStiffnessMatrix(self):
+        H = pd.DataFrame(self.Hg)
+        plt.pcolor(H.reindex(index=H.index[::-1]))
+        plt.yticks(np.arange(0.5, len(H.index), 1), H.index)
+        plt.xticks(np.arange(0.5, len(H.columns), 1), H.columns)
+        plt.show()
