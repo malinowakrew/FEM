@@ -2,7 +2,7 @@ import numpy as np
 import math
 from stiffnessMatrix.integral import *
 
-def PMatrixCalculate(ksi_eta_table, ro, c, jakobiany_tymczasowe):
+def PMatrixCalculate(ksi_eta_table, ro, c, matrix_Jakobian_list):
     size_of_local_data = len(ksi_eta_table)
 
     #Poszczególne N
@@ -21,7 +21,10 @@ def PMatrixCalculate(ksi_eta_table, ro, c, jakobiany_tymczasowe):
 
 
     #Jakobiany - potrzebna refaktoryzacja kodu umożliwiająca liczenie jakobianów
-
+    lista_wyznacznikow_Jakkobianow =[]
+    for matrix_Jakobian in matrix_Jakobian_list:
+        det = matrix_Jakobian[1, 1] * matrix_Jakobian[0, 0] - matrix_Jakobian[1, 0] * matrix_Jakobian[0, 1]
+        lista_wyznacznikow_Jakkobianow.append(det)
 
     #P
 
@@ -31,7 +34,7 @@ def PMatrixCalculate(ksi_eta_table, ro, c, jakobiany_tymczasowe):
         Ni_pkt = matrixN[pkt]
         for i in range(0, 4):
             for j in range(0, 4):
-                P_pkt[i][j] = Ni_pkt[i] * Ni_pkt[j] * ro * c * jakobiany_tymczasowe[pkt]
+                P_pkt[i][j] = Ni_pkt[i] * Ni_pkt[j] * ro * c * lista_wyznacznikow_Jakkobianow[pkt]
 
         P_map.append(P_pkt)
 

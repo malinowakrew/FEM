@@ -1,20 +1,19 @@
 from stiffnessMatrix.net import *
-from stiffnessMatrix.integral import *
-from stiffnessMatrix.stiffnessMatrix import *
 from Pmatrix.PMatrix import *
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
+
+from stiffnessMatrix.HMatrix import *
 
 class SOE():
     def __init__(self) -> None:
         self.nodes = self.initHg()
         self.Hg = np.zeros((self.nodes, self.nodes))
-        self.Pg = np.zeros((4, 4)) # do zmienienia :D
+        self.Pg = np.zeros((self.nodes, self.nodes)) # do zmienienia :D
         self.t = 0
         self.k = 0
-        self.Jacobian_list = 0
+        self.Jacobian_list = []
 
     def read(self):
         path = r"data/data.txt"
@@ -51,7 +50,28 @@ class SOE():
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
 
-            H = form(net_lok.net, net_glob, self.k)
+            #H = form(net_lok.net, net_glob, self.k)
+
+            stiffnessMatrix = StiffnessMatrix(net_lok.net, net_glob, self.k)
+
+            matrix_ksi_eta = stiffnessMatrix.form()
+            print("Krok1")
+            print(matrix_ksi_eta["matrix_eta"])
+            print(matrix_ksi_eta["matrix_ksi"])
+            jacobian = stiffnessMatrix.Jacobian(matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
+            print("Krok2")
+            for i in jacobian:
+                print(i)
+            self.Jacobian_list.append(jacobian)
+            Ni = stiffnessMatrix.derivativeCalculate(jacobian, matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
+            print("Krok3")
+            Ni_x = Ni[:, :4]
+            Ni_y = Ni[:, 4:]
+            print(Ni_x)
+            print(Ni_y)
+            H = stiffnessMatrix.localHcalculate(jacobian, Ni)
+            print("Krok4")
+            print(H)
 
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):
@@ -67,19 +87,23 @@ class SOE():
         else:
             raise ValueError
 
-        #Jakobiany zostaną zmienione
-        P = PMatrixCalculate(net_lok.net, 7800, 700, [0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778])
-        print("Macierz P")
-        print(P)
+        for nr, elem in enumerate(net["elementy"]):
+            net_glob = []
+            for nodeNumber in elem:
+                net_glob.append(net["wezly"][nodeNumber])
+            print(f"Jakobiany dla punkty {nr} {self.Jacobian_list[nr]}")
+            P = PMatrixCalculate(net_lok.net, 7800, 700, self.Jacobian_list[nr])
+            print("Macierz P")
+            print(P)
 
+            for rowNumber, row in enumerate(P):
+                for itemNumber, value in enumerate(row):
+                    self.Pg[elem[rowNumber]][elem[itemNumber]] += value
+
+        #Jakobiany zostaną zmienione
+
+        
         """
-        H = pd.DataFrame(P)
-        plt.pcolor(H.reindex(index=H.index[::-1]))
-        plt.yticks(np.arange(0.5, len(H.index), 1), H.index)
-        plt.xticks(np.arange(0.5, len(H.columns), 1), H.columns)
-        plt.show()
-        
-        
         for rowNumber, row in enumerate(H):
             for itemNumber, value in enumerate(row):
                 self.Hg[elem[rowNumber]][elem[itemNumber]] += value
@@ -91,4 +115,13 @@ class SOE():
         plt.pcolor(H.reindex(index=H.index[::-1]))
         plt.yticks(np.arange(0.5, len(H.index), 1), H.index)
         plt.xticks(np.arange(0.5, len(H.columns), 1), H.columns)
+        plt.title("Stiffness Matrix")
+        plt.show()
+
+    def drawPMatrix(self):
+        P = pd.DataFrame(self.Pg)
+        plt.pcolor(P.reindex(index=P.index[::-1]))
+        plt.yticks(np.arange(0.5, len(P.index), 1), P.index)
+        plt.xticks(np.arange(0.5, len(P.columns), 1), P.columns)
+        plt.title("P Matrix")
         plt.show()

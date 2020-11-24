@@ -9,8 +9,11 @@ def stiffnessmatrixcalculateH():
     soe = SOE()
     soe.calculateHg()
     #print(soe.Hg)
-    soe.drawStiffnessMatrix()
+    #soe.drawStiffnessMatrix()
     soe.calculatePg()
+    print(soe.Pg)
+    soe.drawPMatrix()
+    soe.drawStiffnessMatrix()
 
 
 if __name__ == '__main__':
