@@ -1,17 +1,15 @@
 # This is a sample Python script.
-import pandas as pd
-import matplotlib.pyplot as plt
 
 """
 Edyta Mróz https://github.com/malinowakrew/FEM/
 """
-from stiffnessMatrix.SOE import *
+from SOE.SOE import *
 
 def stiffnessmatrixcalculateH():
     soe = SOE()
     soe.calculateHg()
     #print(soe.Hg)
-    #soe.drawStiffnessMatrix()
+    soe.drawStiffnessMatrix()
     soe.calculatePg()
 
 

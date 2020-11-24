@@ -41,5 +41,4 @@ def PMatrixCalculate(ksi_eta_table, ro, c, jakobiany_tymczasowe):
     if size_of_local_data == 9:
         P = integral_9_elements(P_map, 5.0/9.0, 8.0/9.0)
 
-    print("\n t jest P sum")
-    print(P)
+    return P

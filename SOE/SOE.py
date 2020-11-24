@@ -68,8 +68,18 @@ class SOE():
             raise ValueError
 
         #Jakobiany zostaną zmienione
-        PMatrixCalculate(net_lok.net, 7800, 700, [0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778])
+        P = PMatrixCalculate(net_lok.net, 7800, 700, [0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778])
+        print("Macierz P")
+        print(P)
+
         """
+        H = pd.DataFrame(P)
+        plt.pcolor(H.reindex(index=H.index[::-1]))
+        plt.yticks(np.arange(0.5, len(H.index), 1), H.index)
+        plt.xticks(np.arange(0.5, len(H.columns), 1), H.columns)
+        plt.show()
+        
+        
         for rowNumber, row in enumerate(H):
             for itemNumber, value in enumerate(row):
                 self.Hg[elem[rowNumber]][elem[itemNumber]] += value
