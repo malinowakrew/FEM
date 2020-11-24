@@ -5,13 +5,14 @@ import matplotlib.pyplot as plt
 """
 Edyta Mróz https://github.com/malinowakrew/FEM/
 """
-from stiffnessMatrix.globalStiffnesMatrix import *
+from stiffnessMatrix.SOE import *
 
 def stiffnessmatrixcalculateH():
     soe = SOE()
     soe.calculateHg()
-    soe.drawStiffnessMatrix()
-
+    #print(soe.Hg)
+    #soe.drawStiffnessMatrix()
+    soe.calculatePg()
 
 
 if __name__ == '__main__':

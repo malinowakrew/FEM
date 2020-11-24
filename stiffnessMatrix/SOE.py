@@ -1,6 +1,7 @@
 from stiffnessMatrix.net import *
 from stiffnessMatrix.integral import *
 from stiffnessMatrix.stiffnessMatrix import *
+from Pmatrix.PMatrix import *
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,10 +11,10 @@ class SOE():
     def __init__(self) -> None:
         self.nodes = self.initHg()
         self.Hg = np.zeros((self.nodes, self.nodes))
-        self.Pg = 0
+        self.Pg = np.zeros((4, 4)) # do zmienienia :D
         self.t = 0
         self.k = 0
-        self.pointsNumber = 0
+        self.Jacobian_list = 0
 
     def read(self):
         path = r"data/data.txt"
@@ -37,6 +38,7 @@ class SOE():
 
     def calculateHg(self):
         net = self.read()
+
         if (self.pointsNumber == 4):
             net_lok = net_4_elements(-1.0 / math.sqrt(3))
         elif (self.pointsNumber == 9):
@@ -54,6 +56,25 @@ class SOE():
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):
                     self.Hg[elem[rowNumber]][elem[itemNumber]] += value
+
+    def calculatePg(self):
+        net = self.read()
+
+        if (self.pointsNumber == 4):
+            net_lok = net_4_elements(-1.0 / math.sqrt(3))
+        elif (self.pointsNumber == 9):
+            net_lok = net_9_elements(math.sqrt(3.0 / 5.0))
+        else:
+            raise ValueError
+
+        #Jakobiany zostaną zmienione
+        PMatrixCalculate(net_lok.net, 7800, 700, [0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778, 0.0002777777777777778])
+        """
+        for rowNumber, row in enumerate(H):
+            for itemNumber, value in enumerate(row):
+                self.Hg[elem[rowNumber]][elem[itemNumber]] += value
+
+        """
 
     def drawStiffnessMatrix(self):
         H = pd.DataFrame(self.Hg)

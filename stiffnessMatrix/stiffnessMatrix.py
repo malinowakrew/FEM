@@ -4,13 +4,12 @@ from stiffnessMatrix.integral import *
 
 def form (ksi_eta_table, x_y_table, k):
     """"
-    N1 = (1.0-xy)(1.0-eta)/4.0
-    N2 = (1.0+xy)(1.0-eta)/4.0
-    N3 = (1.0+xy)(1.0+eta)/4.0
-    N4 = (1.0-xy)(1.0+eta)/4.0
+    N1 = (1.0-ksi)(1.0-eta)/4.0
+    N2 = (1.0+ksi)(1.0-eta)/4.0
+    N3 = (1.0+ksi)(1.0+eta)/4.0
+    N4 = (1.0-ksi)(1.0+eta)/4.0
     """
-    size_of_global_data = len(ksi_eta_table)
-    #print("Wielkość mojego teg:", size_of_global_data)
+    size_of_local_data = len(ksi_eta_table)
 
     Y_N1_dev_ksi = lambda ksi: (1.0-ksi)/-4.0
     Y_N2_dev_ksi = lambda ksi: (1.0+ksi)/-4.0
@@ -24,8 +23,8 @@ def form (ksi_eta_table, x_y_table, k):
     X_N4_dev_eta = lambda eta: (1.0 + eta)/-4.0
     X_N = [X_N1_dev_eta, X_N2_dev_eta, X_N3_dev_eta, X_N4_dev_eta]
 
-    matrix_ksi = np.zeros((size_of_global_data, 4))
-    matrix_eta = np.zeros((size_of_global_data, 4))
+    matrix_ksi = np.zeros((size_of_local_data, 4))
+    matrix_eta = np.zeros((size_of_local_data, 4))
 
     for nr_2, point in enumerate(ksi_eta_table):
         for nr_1, n in enumerate(X_N):
@@ -39,11 +38,11 @@ def form (ksi_eta_table, x_y_table, k):
     #print(matrix_ksi)
     #print(matrix_eta)
 
-    Ni_x = np.zeros((size_of_global_data, 4))
-    Ni_y = np.zeros((size_of_global_data, 4))
+    Ni_x = np.zeros((size_of_local_data, 4))
+    Ni_y = np.zeros((size_of_local_data, 4))
 
     lista_wyznacznikow_Jakkobianow = []
-    for i in range(0, size_of_global_data):
+    for i in range(0, size_of_local_data):
         matrix_Jakobian = np.zeros((2, 2))
         Ni_eta = matrix_eta[i]
         Ni_ksi = matrix_ksi[i]
@@ -85,7 +84,7 @@ def form (ksi_eta_table, x_y_table, k):
 
 
     H_map = []
-    for pkt in range(0, size_of_global_data):
+    for pkt in range(0, size_of_local_data):
         H_pkt_x = np.zeros((4, 4))
         H_pkt_y = np.zeros((4, 4))
         Ni_x_pkt = Ni_x[pkt]
@@ -99,16 +98,16 @@ def form (ksi_eta_table, x_y_table, k):
         #print(f"H lokalne dla punktu {pkt}")
         #print(H_pkt_y+H_pkt_x)
 
-    H = np.zeros((4, size_of_global_data))
-    if(size_of_global_data == 4):
+    H = np.zeros((4, size_of_local_data))
+    if(size_of_local_data == 4):
         #H += (H_pkt_x + H_pkt_y)
         H = integral_4_elements(H_map, 1.0)
-    if(size_of_global_data == 9):
+    if(size_of_local_data == 9):
         H = integral_9_elements(H_map, 5.0/9.0, 8.0/9.0)
 
         #print(f"\n\n\n H dla {pkt} \n{(H_pkt_x + H_pkt_y) * 30.0 * det}")
         #print(f"Macierz H  dla punktu nr {pkt} \n{H_pkt_x}")
         #print(f"Macierz H x dla punktu nr {pkt} \n{H_pkt_y}")
 
-    print(f"\n\n\nMatrix H \n{H}")
+    #print(f"\n\n\nMatrix H \n{H}")
     return H
