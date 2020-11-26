@@ -17,6 +17,7 @@ class StiffnessMatrix:
         N4 = (1.0-ksi)(1.0+eta)/4.0
         """
         size_of_local_data = len(ksi_eta_table)
+        print(size_of_local_data)
 
         Y_N1_dev_ksi = lambda ksi: (1.0 - ksi) / -4.0
         Y_N2_dev_ksi = lambda ksi: (1.0 + ksi) / -4.0
@@ -101,8 +102,8 @@ class StiffnessMatrix:
 
 
     def localHcalculate(self, matrix_Jakobian_list, Ni):
-        Ni_x = Ni[:4]
-        Ni_y = Ni[4:]
+        Ni_x = Ni[:self.size_of_local_data]
+        Ni_y = Ni[self.size_of_local_data:]
         H_map = []
 
         lista_wyznacznikow_Jakkobianow = []
@@ -132,6 +133,7 @@ class StiffnessMatrix:
             H = integral_4_elements(H_map, 1.0)
         if (self.size_of_local_data == 9):
             H = integral_9_elements(H_map, 5.0 / 9.0, 8.0 / 9.0)
-
+        if (self.size_of_local_data == 16):
+            H = integral_16_elements(H_map, 0.347855, 0.652145)
         return H
 

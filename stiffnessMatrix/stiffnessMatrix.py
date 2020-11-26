@@ -77,12 +77,14 @@ def form (ksi_eta_table, x_y_table, k):
             Ni_x[i][j] = Ni_x_in_row
             Ni_y[i][j] = Ni_y_in_row
 
+    """
     print("d{{N}}/dx")
     print(Ni_y)
     print("d{{N}}/dy")
     print(Ni_x)
 
     print(lista_wyznacznikow_Jakkobianow)
+    """
 
 
     H_map = []

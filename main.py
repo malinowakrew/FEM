@@ -11,7 +11,7 @@ def stiffnessmatrixcalculateH():
     #print(soe.Hg)
     #soe.drawStiffnessMatrix()
     soe.calculatePg()
-    print(soe.Pg)
+    print(soe.Hg)
     soe.drawPMatrix()
     soe.drawStiffnessMatrix()
 

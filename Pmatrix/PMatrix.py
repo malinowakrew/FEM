@@ -43,5 +43,7 @@ def PMatrixCalculate(ksi_eta_table, ro, c, matrix_Jakobian_list):
         P = integral_4_elements(P_map, 1.0)
     if size_of_local_data == 9:
         P = integral_9_elements(P_map, 5.0/9.0, 8.0/9.0)
+    if size_of_local_data == 16:
+        P = integral_16_elements(P_map, 0.347855, 0.652145)
 
     return P

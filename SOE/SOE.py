@@ -42,6 +42,8 @@ class SOE():
             net_lok = net_4_elements(-1.0 / math.sqrt(3))
         elif (self.pointsNumber == 9):
             net_lok = net_9_elements(math.sqrt(3.0 / 5.0))
+        elif (self.pointsNumber == 16):
+            net_lok = net_16_elements(2)
         else:
             raise ValueError
 
@@ -55,23 +57,14 @@ class SOE():
             stiffnessMatrix = StiffnessMatrix(net_lok.net, net_glob, self.k)
 
             matrix_ksi_eta = stiffnessMatrix.form()
-            print("Krok1")
-            print(matrix_ksi_eta["matrix_eta"])
-            print(matrix_ksi_eta["matrix_ksi"])
             jacobian = stiffnessMatrix.Jacobian(matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
-            print("Krok2")
-            for i in jacobian:
-                print(i)
             self.Jacobian_list.append(jacobian)
             Ni = stiffnessMatrix.derivativeCalculate(jacobian, matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
-            print("Krok3")
-            Ni_x = Ni[:, :4]
-            Ni_y = Ni[:, 4:]
-            print(Ni_x)
-            print(Ni_y)
+            for i in jacobian:
+                print(i)
+            print(len(Ni))
             H = stiffnessMatrix.localHcalculate(jacobian, Ni)
-            print("Krok4")
-            print(H)
+
 
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):
@@ -80,10 +73,13 @@ class SOE():
     def calculatePg(self):
         net = self.read()
 
-        if (self.pointsNumber == 4):
+        if self.pointsNumber == 4:
             net_lok = net_4_elements(-1.0 / math.sqrt(3))
-        elif (self.pointsNumber == 9):
+        elif self.pointsNumber == 9:
             net_lok = net_9_elements(math.sqrt(3.0 / 5.0))
+        elif self.pointsNumber == 16:
+            net_lok = net_16_elements(2)
+
         else:
             raise ValueError
 

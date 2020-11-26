@@ -1,3 +1,4 @@
+import numpy as np
 class net_4_elements():
     def __init__ (self, delta):
         self.net = self.net_ksi_eta(delta)
@@ -37,6 +38,28 @@ class net_9_elements():
         result += function((net[4])[0], (net[4])[1]) * weight_2 ** 2
         return result
 
+class net_16_elements:
+    def __init__(self, delta):
+        self.net = self.net_ksi_eta(delta)
+
+    def net_ksi_eta(self, delta):
+        net = []
+        row = [-0.861136, -0.339981, 0.339981, 0.861136]
+        for numeri, i in enumerate(row):
+            for numerj, j in enumerate(row):
+                net.append([i, j])
+        return net
+
+    def integral_9_elements(self, function, weight_1, weight_2):
+        net = self.net
+        result = 0.0
+        for number in [0, 2, 6, 8]:
+            result += function(net[number][0], net[number][1]) * weight_1 ** 2
+        for number in [1, 3, 5, 7]:
+            result += function(net[number][0], net[number][1]) * weight_1 * weight_2
+        result += function((net[4])[0], (net[4])[1]) * weight_2 ** 2
+        return result
+
 #### PRÓBA ####
 def integral_4_elements(values, weight):
     result = 0.0
@@ -53,3 +76,12 @@ def integral_9_elements(values, weight_1, weight_2):
     result += values[4] * weight_2 ** 2
     return result
 
+def integral_16_elements(values, weight_1, weight_2):
+    result = 0.0
+    for number in [0, 3, 12, 15]:
+        result += values[number] * weight_1 ** 2
+    for number in [1, 2, 4, 7, 8, 11, 13, 14]:
+        result += values[number] * weight_1 * weight_2
+    for number in [5, 6, 9, 10]:
+        result += values[number] * weight_2 ** 2
+    return result
