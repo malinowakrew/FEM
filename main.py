@@ -8,12 +8,22 @@ from SOE.SOE import *
 def stiffnessmatrixcalculateH():
     soe = SOE()
     soe.calculateHg()
-    #print(soe.Hg)
-    #soe.drawStiffnessMatrix()
     soe.calculatePg()
-    print(soe.Hg)
-    soe.drawPMatrix()
-    soe.drawStiffnessMatrix()
+
+    np.set_printoptions(linewidth=np.inf)
+    print("\nMatrix H")
+    with np.printoptions(precision=3, suppress=True):
+        print(soe.Hg)
+
+    print("\n\nMatrix P")
+    with np.printoptions(precision=3, suppress=True):
+        print(soe.Pg)
+
+    #drawing matrix
+    #soe.drawPMatrix()
+    #soe.drawStiffnessMatrix()
+
+    soe.drawNet()
 
 
 if __name__ == '__main__':
