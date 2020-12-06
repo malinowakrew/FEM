@@ -65,9 +65,7 @@ class SOE():
             jacobian = stiffnessMatrix.Jacobian(matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
             self.Jacobian_list.append(jacobian)
             Ni = stiffnessMatrix.derivativeCalculate(jacobian, matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
-            #for i in jacobian:
-            #    print(i)
-            #print(len(Ni))
+            #print(Ni)
             H = stiffnessMatrix.localHcalculate(jacobian, Ni)
 
 
@@ -120,3 +118,7 @@ class SOE():
         for krotka in self.net.net:
             plt.plot(krotka, 'bo')
         plt.show()
+
+    def calculateHBC(self, ksi_eta_edges, mask):
+        for edge in range(0, 8, 2):
+            print(edge)

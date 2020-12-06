@@ -96,7 +96,6 @@ class StiffnessMatrix:
                 Ni_y_in_row = (matrix_Jakobian1[0][1] * Ni_eta[j] + matrix_Jakobian1[1][1] * Ni_ksi[j])
                 Ni_x[i][j] = Ni_x_in_row
                 Ni_y[i][j] = Ni_y_in_row
-
         Ni = np.concatenate((Ni_x, Ni_y))
         return Ni
 
@@ -124,17 +123,81 @@ class StiffnessMatrix:
                     H_pkt_y[i][j] = Ni_y_pkt[i] * Ni_y_pkt[j] * self.k * lista_wyznacznikow_Jakkobianow[pkt]
 
             H_map.append(H_pkt_y + H_pkt_x)
-            # print(f"H lokalne dla punktu {pkt}")
-            # print(H_pkt_y+H_pkt_x)
+            #print(f"H lokalne dla punktu {pkt}")
+            #print(H_pkt_y+H_pkt_x)
 
         H = np.zeros((4, self.size_of_local_data))
         if (self.size_of_local_data == 4):
-            # H += (H_pkt_x + H_pkt_y)
             H = integral_4_elements(H_map, 1.0)
         if (self.size_of_local_data == 9):
             H = integral_9_elements(H_map, 5.0 / 9.0, 8.0 / 9.0)
         if (self.size_of_local_data == 16):
             H = integral_16_elements(H_map, 0.347855, 0.652145)
-        print(H)
         return H
+
+class TESTowa:
+
+    def jacobian(self, localData: []):
+        jacobianTable = []
+        for nodeNumber, node in enumerate(localData):
+            if nodeNumber != len(localData) - 1:
+                pass
+            else:
+                #jacobianTable.append((localData[] - localData[nodeNumber]) / 2.0)
+                pass
+
+    def calculateHBC(self, ksi_eta_edges, mask, detList, alfa):
+        for maskNumber, i in enumerate(mask):
+            edge = False
+            number2: int = 0
+            number1: int = 0
+            if maskNumber != len(mask) - 1:
+                if i == 1.0 and mask[maskNumber + 1] == 1.0:
+                    edge = True
+                    number1 = maskNumber
+                    number2 = maskNumber + 1
+
+            else:
+                if i == 1.0 and mask[0] == 1.0:
+                    edge = True
+                    number1 = maskNumber
+                    number2 = 0
+
+            if edge:
+                N_matrix = np.zeros((4, 4))
+                node1 = (ksi_eta_edges[number1])[0]
+                node2 = (ksi_eta_edges[number1])[1]
+                node = [node1, node2]
+                for iter in range(0, 2):
+                    print(f"{node[iter]}, {node[iter]}")
+                    N = [0, 0, 0, 0]
+                    if number1 in [0, 2]:
+                        N[number1] = (1.0 - (node[iter])[0]) / 2.0
+                        N[number2] = (1.0 + (node[iter])[0]) / 2.0
+                    if number1 in [1, 3]:
+                        N[number1] = (1.0 - (node[iter])[1]) / 2.0
+                        N[number2] = (1.0 + (node[iter])[1]) / 2.0
+
+                    print(f"N looks like this {N}")
+
+                    for i in range(0, 4):
+                        for j in range(0, 4):
+                            N_matrix[i][j] += N[i] * N[j] * alfa * detList[number1]  # bo na razie wagi to 1 właśnie :)
+
+                print(N_matrix)
+                print("")
+
+
+
+
+
+
+def test():
+    net = net_4_elements(1.0/math.sqrt(3))
+    klasa = TESTowa()
+    klasa.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], [1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0], 25.0, 0)
+
+
+if __name__ == "__main__":
+    test()
 

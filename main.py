@@ -7,6 +7,8 @@ from SOE.SOE import *
 
 def stiffnessmatrixcalculateH():
     soe = SOE()
+    soe.calculateHBC(3, 4)
+    """
     soe.calculateHg()
     soe.calculatePg()
 
@@ -20,14 +22,16 @@ def stiffnessmatrixcalculateH():
         print(soe.Pg)
 
     #drawing matrix
-    #soe.drawPMatrix()
-    #soe.drawStiffnessMatrix()
+    soe.drawPMatrix()
+    soe.drawStiffnessMatrix()
 
-    soe.drawNet()
+    #soe.drawNet()
+    """
 
 
 if __name__ == '__main__':
     stiffnessmatrixcalculateH()
+
 
 
 

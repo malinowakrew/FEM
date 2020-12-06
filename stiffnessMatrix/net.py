@@ -13,7 +13,13 @@ def net(H, W, nH: int, nW: int):
             i = c + j * nH
             elementy.append([i, i + nH, i + nH + 1, i + 1])
 
-    return ({"wezly": wezly, "elementy": elementy})
+    krawedzie = [0 for i in wezly]
+    for numberNode, node in enumerate(wezly):
+        if node[1] == H or node[0] == W:
+            krawedzie[numberNode] = 1.0
+
+
+    return ({"wezly": wezly, "elementy": elementy, "krawedzie": krawedzie})
 
 class globalNet():
     def __init__(self)->None:
