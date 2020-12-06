@@ -2,7 +2,7 @@ import numpy as np
 import math
 from stiffnessMatrix.integral import *
 
-def PMatrixCalculate(ksi_eta_table, ro, c, matrix_Jakobian_list):
+def CMatrixCalculate(ksi_eta_table, ro, c, matrix_Jakobian_list):
     size_of_local_data = len(ksi_eta_table)
 
     #Poszczególne N
@@ -28,7 +28,7 @@ def PMatrixCalculate(ksi_eta_table, ro, c, matrix_Jakobian_list):
 
     #P
 
-    P_map = []
+    C_map = []
     for pkt in range(0, size_of_local_data):
         P_pkt = np.zeros((4, 4))
         Ni_pkt = matrixN[pkt]
@@ -36,14 +36,14 @@ def PMatrixCalculate(ksi_eta_table, ro, c, matrix_Jakobian_list):
             for j in range(0, 4):
                 P_pkt[i][j] = Ni_pkt[i] * Ni_pkt[j] * ro * c * lista_wyznacznikow_Jakkobianow[pkt]
 
-        P_map.append(P_pkt)
+        C_map.append(P_pkt)
 
-    P = np.zeros((4, 4))
+    C = np.zeros((4, 4))
     if size_of_local_data == 4:
-        P = integral_4_elements(P_map, 1.0)
+        C = integral_4_elements(C_map, 1.0)
     if size_of_local_data == 9:
-        P = integral_9_elements(P_map, 5.0/9.0, 8.0/9.0)
+        C = integral_9_elements(C_map, 5.0/9.0, 8.0/9.0)
     if size_of_local_data == 16:
-        P = integral_16_elements(P_map, 0.347855, 0.652145)
+        C = integral_16_elements(C_map, 0.347855, 0.652145)
 
-    return P
+    return C

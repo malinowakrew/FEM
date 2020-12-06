@@ -135,16 +135,22 @@ class StiffnessMatrix:
             H = integral_16_elements(H_map, 0.347855, 0.652145)
         return H
 
-class TESTowa:
+class HBC:
 
     def jacobian(self, localData: []):
         jacobianTable = []
         for nodeNumber, node in enumerate(localData):
             if nodeNumber != len(localData) - 1:
-                pass
+                L = math.sqrt((localData[nodeNumber][0]-localData[nodeNumber+1][0])**2 +
+                              (localData[nodeNumber][1]-localData[nodeNumber+1][1])**2)
+                jacobianTable.append(L / 2.0)
             else:
-                #jacobianTable.append((localData[] - localData[nodeNumber]) / 2.0)
-                pass
+                L = math.sqrt((localData[nodeNumber][0] - localData[0][0]) ** 2
+                              + (localData[nodeNumber][1] - localData[0][1]) ** 2)
+                jacobianTable.append(L / 2.0)
+
+        return jacobianTable
+
 
     def calculateHBC(self, ksi_eta_edges, mask, detList, alfa):
         for maskNumber, i in enumerate(mask):
@@ -169,7 +175,7 @@ class TESTowa:
                 node2 = (ksi_eta_edges[number1])[1]
                 node = [node1, node2]
                 for iter in range(0, 2):
-                    print(f"{node[iter]}, {node[iter]}")
+                    #print(f"{node[iter]}, {node[iter]}")
                     N = [0, 0, 0, 0]
                     if number1 in [0, 2]:
                         N[number1] = (1.0 - (node[iter])[0]) / 2.0
@@ -178,7 +184,7 @@ class TESTowa:
                         N[number1] = (1.0 - (node[iter])[1]) / 2.0
                         N[number2] = (1.0 + (node[iter])[1]) / 2.0
 
-                    print(f"N looks like this {N}")
+                    #print(f"N looks like this {N}")
 
                     for i in range(0, 4):
                         for j in range(0, 4):
@@ -194,8 +200,10 @@ class TESTowa:
 
 def test():
     net = net_4_elements(1.0/math.sqrt(3))
-    klasa = TESTowa()
-    klasa.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], [1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0], 25.0, 0)
+    klasa = HBC()
+    j = klasa.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
+    print(j)
+    klasa.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], j, 25.0)
 
 
 if __name__ == "__main__":

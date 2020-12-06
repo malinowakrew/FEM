@@ -10,7 +10,7 @@ class SOE():
     def __init__(self) -> None:
         self.nodes = self.initHg()
         self.Hg = np.zeros((self.nodes, self.nodes))
-        self.Pg = np.zeros((self.nodes, self.nodes)) # do zmienienia :D
+        self.Cg = np.zeros((self.nodes, self.nodes)) # do zmienienia :D
         self.net = self.initNet()
         self.t = 0
         self.k = 0
@@ -73,20 +73,20 @@ class SOE():
                 for itemNumber, value in enumerate(row):
                     self.Hg[elem[rowNumber]][elem[itemNumber]] += value
 
-    def calculatePg(self):
+    def calculateCg(self):
         net = self.read()
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
             #print(f"Jakobiany dla punkty {nr} {self.Jacobian_list[nr]}")
-            P = PMatrixCalculate(self.net.net, 7800, 700, self.Jacobian_list[nr])
+            C = CMatrixCalculate(self.net.net, 7800, 700, self.Jacobian_list[nr])
             #print("Macierz P")
             #print(P)
 
-            for rowNumber, row in enumerate(P):
+            for rowNumber, row in enumerate(C):
                 for itemNumber, value in enumerate(row):
-                    self.Pg[elem[rowNumber]][elem[itemNumber]] += value
+                    self.Cg[elem[rowNumber]][elem[itemNumber]] += value
 
         #Jakobiany zostaną zmienione
 
@@ -106,12 +106,12 @@ class SOE():
         plt.title("Stiffness Matrix")
         plt.show()
 
-    def drawPMatrix(self):
-        P = pd.DataFrame(self.Pg)
+    def drawCMatrix(self):
+        P = pd.DataFrame(self.Cg)
         plt.pcolor(P.reindex(index=P.index[::-1]))
         plt.yticks(np.arange(0.5, len(P.index), 1), P.index)
         plt.xticks(np.arange(0.5, len(P.columns), 1), P.columns)
-        plt.title("P Matrix")
+        plt.title("C Matrix")
         plt.show()
 
     def drawNet(self):
@@ -119,6 +119,8 @@ class SOE():
             plt.plot(krotka, 'bo')
         plt.show()
 
-    def calculateHBC(self, ksi_eta_edges, mask):
-        for edge in range(0, 8, 2):
-            print(edge)
+    def calculateHBC(self, c):
+        net = net_4_elements(1.0 / math.sqrt(3))
+        klasa = HBC()
+        jakobiany = klasa.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
+        klasa.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], jakobiany, c)
