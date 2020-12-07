@@ -9,8 +9,9 @@ def stiffnessmatrixcalculateH():
     soe = SOE()
     soe.calculateHBC(25.0)
 
+    """
     soe.calculateHg()
-    soe.calculateCg()
+    soe.calculateCg(7800, 700)
 
     np.set_printoptions(linewidth=np.inf)
     print("\nMatrix H")
@@ -27,7 +28,7 @@ def stiffnessmatrixcalculateH():
 
     #soe.drawNet()
 
-
+    """
 
 if __name__ == '__main__':
     stiffnessmatrixcalculateH()

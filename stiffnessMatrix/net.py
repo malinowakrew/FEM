@@ -17,6 +17,8 @@ def net(H, W, nH: int, nW: int):
     for numberNode, node in enumerate(wezly):
         if node[1] == H or node[0] == W:
             krawedzie[numberNode] = 1.0
+        if node[0] == 0.0 or node[1] == 0.0:
+            krawedzie[numberNode] = 1.0
 
 
     return ({"wezly": wezly, "elementy": elementy, "krawedzie": krawedzie})

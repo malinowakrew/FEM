@@ -73,14 +73,14 @@ class SOE():
                 for itemNumber, value in enumerate(row):
                     self.Hg[elem[rowNumber]][elem[itemNumber]] += value
 
-    def calculateCg(self):
+    def calculateCg(self, c, ro):
         net = self.read()
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
             #print(f"Jakobiany dla punkty {nr} {self.Jacobian_list[nr]}")
-            C = CMatrixCalculate(self.net.net, 7800, 700, self.Jacobian_list[nr])
+            C = CMatrixCalculate(self.net.net, c, ro, self.Jacobian_list[nr])
             #print("Macierz P")
             #print(P)
 
@@ -97,6 +97,25 @@ class SOE():
                 self.Hg[elem[rowNumber]][elem[itemNumber]] += value
 
         """
+    def calculateHBC(self, c):
+        net = self.read()
+        print(net["wezly"])
+        for nr, elem in enumerate(net["elementy"]):
+            net_glob = []
+            mask_glob = []
+            for nodeNumber in elem:
+                net_glob.append(net["wezly"][nodeNumber])
+                mask_glob.append(net["krawedzie"][nodeNumber])
+
+
+            if mask_glob != [0.0, 0.0, 0.0, 0.0]:
+                print(f"Maska {mask_glob} dla {net_glob} dla elementu {nr}")
+                localNet = net_4_elements(1.0 / math.sqrt(3))
+                hbc = HBC()
+                jacobiany = hbc.jacobian(net_glob)
+                hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c) # to nie zależy dla delty
+
+
 
     def drawStiffnessMatrix(self):
         H = pd.DataFrame(self.Hg)
@@ -119,8 +138,8 @@ class SOE():
             plt.plot(krotka, 'bo')
         plt.show()
 
-    def calculateHBC(self, c):
+    def HBCtest(self, c):
         net = net_4_elements(1.0 / math.sqrt(3))
-        klasa = HBC()
-        jakobiany = klasa.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
-        klasa.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], jakobiany, c)
+        hbc = HBC()
+        jakobiany = hbc.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
+        hbc.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], jakobiany, c)

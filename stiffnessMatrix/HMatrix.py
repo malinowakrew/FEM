@@ -1,4 +1,3 @@
-import numpy as np
 from stiffnessMatrix.integral import *
 
 class StiffnessMatrix:
@@ -153,6 +152,7 @@ class HBC:
 
 
     def calculateHBC(self, ksi_eta_edges, mask, detList, alfa):
+        HBCforElement = np.zeros((4, 4))
         for maskNumber, i in enumerate(mask):
             edge = False
             number2: int = 0
@@ -190,8 +190,10 @@ class HBC:
                         for j in range(0, 4):
                             N_matrix[i][j] += N[i] * N[j] * alfa * detList[number1]  # bo na razie wagi to 1 właśnie :)
 
-                print(N_matrix)
-                print("")
+                #print(N_matrix)
+                HBCforElement += N_matrix
+                #print("")
+        print(f"HBC dla elementu : \n{HBCforElement}")
 
 
 
