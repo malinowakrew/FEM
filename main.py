@@ -6,19 +6,23 @@ Edyta Mróz https://github.com/malinowakrew/FEM/
 from SOE.SOE import *
 
 def stiffnessmatrixcalculateH():
+
+    np.set_printoptions(linewidth=np.inf)
     soe = SOE()
     soe.calculateHBC(25.0)
 
-    """
-    soe.calculateHg()
+    soe.calculateP(300.0, 1200.0)
+    print(soe.Pg)
+
+    soe.calculateHg(25.0)
+
     soe.calculateCg(7800, 700)
 
-    np.set_printoptions(linewidth=np.inf)
     print("\nMatrix H")
     with np.printoptions(precision=3, suppress=True):
         print(soe.Hg)
 
-    print("\n\nMatrix P")
+    print("\n\nMatrix C")
     with np.printoptions(precision=3, suppress=True):
         print(soe.Cg)
 
@@ -26,14 +30,8 @@ def stiffnessmatrixcalculateH():
     soe.drawCMatrix()
     soe.drawStiffnessMatrix()
 
-    #soe.drawNet()
-
-    """
 
 if __name__ == '__main__':
     stiffnessmatrixcalculateH()
 
 
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/

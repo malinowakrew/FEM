@@ -14,9 +14,9 @@ class net_4_elements():
     def edges_ksi_eta(self, delta):
         net = []
         return [[(-1.0/math.sqrt(3), -1.0), (1.0/math.sqrt(3), -1.0)],
-                [(1.0, -1.0/math.sqrt(3)), (1.0, 1.0/math.sqrt(3))],
+                [(-1.0, 1.0 / math.sqrt(3)), (-1.0, -1.0 / math.sqrt(3))],
                 [(1.0/math.sqrt(3), 1.0), (-1.0/math.sqrt(3), 1.0)],
-                [(-1.0, 1.0/math.sqrt(3)), (-1.0, -1.0/math.sqrt(3))]]
+                [(1.0, -1.0 / math.sqrt(3)), (1.0, 1.0 / math.sqrt(3))]]
 
     def integral_4_elements(self, function, weight):
         result = 0.0

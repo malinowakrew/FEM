@@ -1,8 +1,7 @@
 from stiffnessMatrix.net import *
-from Pmatrix.PMatrix import *
+from Cmatrix.CMatrix import *
 import pandas as pd
 import matplotlib.pyplot as plt
-import math
 
 from stiffnessMatrix.HMatrix import *
 
@@ -11,6 +10,7 @@ class SOE():
         self.nodes = self.initHg()
         self.Hg = np.zeros((self.nodes, self.nodes))
         self.Cg = np.zeros((self.nodes, self.nodes)) # do zmienienia :D
+        self.Pg = np.zeros(self.nodes)
         self.net = self.initNet()
         self.t = 0
         self.k = 0
@@ -30,6 +30,7 @@ class SOE():
 
         self.k = float(table[4])
         self.pointsNumber = int(table[5])
+        self.t = float(table[6])
         return s
 
     def initHg(self):
@@ -39,26 +40,28 @@ class SOE():
     def initNet(self):
         net = self.read()
 
-        if (self.pointsNumber == 4):
+        if self.pointsNumber == 4:
             net_lok = net_4_elements(-1.0 / math.sqrt(3))
-        elif (self.pointsNumber == 9):
+        elif self.pointsNumber == 9:
             net_lok = net_9_elements(math.sqrt(3.0 / 5.0))
-        elif (self.pointsNumber == 16):
+        elif self.pointsNumber == 16:
             net_lok = net_16_elements(2)
         else:
             raise ValueError
 
         return net_lok
 
-    def calculateHg(self):
+    def calculateHg(self, c):
         net = self.read()
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
+            mask_glob = []
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
+                mask_glob.append(net["krawedzie"][nodeNumber])
 
             #H = form(net_lok.net, net_glob, self.k)
-
+            #H
             stiffnessMatrix = StiffnessMatrix(self.net.net, net_glob, self.k)
 
             matrix_ksi_eta = stiffnessMatrix.form()
@@ -68,6 +71,15 @@ class SOE():
             #print(Ni)
             H = stiffnessMatrix.localHcalculate(jacobian, Ni)
 
+            #H_bc
+            if mask_glob != [0.0, 0.0, 0.0, 0.0]:
+                #print(f"Maska {mask_glob} dla {net_glob} dla elementu {nr}")
+                localNet = net_4_elements(1.0 / math.sqrt(3))
+                hbc = HBC()
+                jacobiany = hbc.jacobian(net_glob)
+                H_bc = hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c) # to nie zależy dla delty
+
+                H += H_bc
 
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):
@@ -107,15 +119,31 @@ class SOE():
                 net_glob.append(net["wezly"][nodeNumber])
                 mask_glob.append(net["krawedzie"][nodeNumber])
 
-
             if mask_glob != [0.0, 0.0, 0.0, 0.0]:
                 print(f"Maska {mask_glob} dla {net_glob} dla elementu {nr}")
                 localNet = net_4_elements(1.0 / math.sqrt(3))
                 hbc = HBC()
                 jacobiany = hbc.jacobian(net_glob)
-                hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c) # to nie zależy dla delty
+                print(hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c)) # to nie zależy dla delty
 
+    def calculateP(self, c, t8):
+        net = self.read()
+        print(net["wezly"])
+        for nr, elem in enumerate(net["elementy"]):
+            net_glob = []
+            mask_glob = []
+            for nodeNumber in elem:
+                net_glob.append(net["wezly"][nodeNumber])
+                mask_glob.append(net["krawedzie"][nodeNumber])
 
+            if mask_glob != [0.0, 0.0, 0.0, 0.0]:
+                localNet = net_4_elements(1.0 / math.sqrt(3))
+                hbc = Pmatrix()
+                jacobiany = hbc.jacobian(net_glob)
+                P_local = hbc.calculateP(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c, t8)# to nie zależy dla delty
+
+                for number, _ in enumerate(P_local):
+                    self.Pg[elem[number]] = P_local[number]
 
     def drawStiffnessMatrix(self):
         H = pd.DataFrame(self.Hg)
@@ -138,8 +166,3 @@ class SOE():
             plt.plot(krotka, 'bo')
         plt.show()
 
-    def HBCtest(self, c):
-        net = net_4_elements(1.0 / math.sqrt(3))
-        hbc = HBC()
-        jakobiany = hbc.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
-        hbc.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], jakobiany, c)

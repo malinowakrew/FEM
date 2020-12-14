@@ -164,18 +164,20 @@ class HBC:
                     number2 = maskNumber + 1
 
             else:
-                if i == 1.0 and mask[0] == 1.0:
+                if mask[maskNumber] == 1.0 and mask[0] == 1.0:
                     edge = True
                     number1 = maskNumber
                     number2 = 0
 
             if edge:
                 N_matrix = np.zeros((4, 4))
-                node1 = (ksi_eta_edges[number1])[0]
-                node2 = (ksi_eta_edges[number1])[1]
-                node = [node1, node2]
-                for iter in range(0, 2):
-                    #print(f"{node[iter]}, {node[iter]}")
+                #node1 = (ksi_eta_edges[number1])[0]
+                #node2 = (ksi_eta_edges[number1])[1]
+                #node = [node1, node2]
+                node = ksi_eta_edges[number1]
+
+                for iter in range(0, len(node)):
+                    #ten podział prawdopodobnie nie jest konieczny
                     N = [0, 0, 0, 0]
                     if number1 in [0, 2]:
                         N[number1] = (1.0 - (node[iter])[0]) / 2.0
@@ -193,19 +195,82 @@ class HBC:
                 #print(N_matrix)
                 HBCforElement += N_matrix
                 #print("")
-        print(f"HBC dla elementu : \n{HBCforElement}")
+        #print(f"HBC dla elementu : \n{HBCforElement}")
+        return HBCforElement
 
 
+class Pmatrix():
+    def __init___(self):
+        pass
 
+    @staticmethod
+    def calculateP(self, ksi_eta_edges, mask, det_list, alfa, t8):
+        PforElement = np.zeros(4)
+        for maskNumber, i in enumerate(mask):
+            edge = False
+            number2: int = 0
+            number1: int = 0
+            if maskNumber != len(mask) - 1:
+                if mask[maskNumber] == 1.0 and mask[maskNumber + 1] == 1.0:
+                    edge = True
+                    number1 = maskNumber
+                    number2 = maskNumber + 1
 
+            else:
+                if mask[maskNumber] == 1.0 and mask[0] == 1.0:
+                    edge = True
+                    number1 = maskNumber
+                    number2 = 0
+
+            if edge:
+                node1 = (ksi_eta_edges[number1])[0]
+                node2 = (ksi_eta_edges[number1])[1]
+                node = [node1, node2]
+
+                N1 = lambda ksi: (1.0-ksi) / 2.0
+                N2 = lambda ksi: (1.0+ksi) / 2.0
+
+                N_lambda = [N1, N2]
+                P_local = np.zeros(4)
+                for iter in range(0, 2):
+                    N = np.zeros(4)
+
+                    if number1 in [0, 2]:
+                        N[number1] = N_lambda[0]((node[iter])[0])
+                        N[number2] = N_lambda[1]((node[iter])[0])
+                    if number1 in [1, 3]:
+                        N[number1] = N_lambda[0]((node[iter])[1])
+                        N[number2] = N_lambda[1]((node[iter])[1])
+
+                    P_local += 1.0 * N * det_list[maskNumber] * -1.0 * alfa * t8
+
+                PforElement += P_local
+
+        #print(f"P dla elementu {mask}: \n{PforElement}")
+        #print("\n")
+        return PforElement
+
+    def jacobian(self, localData: []):
+        jacobianTable = []
+        for nodeNumber, node in enumerate(localData):
+            if nodeNumber != len(localData) - 1:
+                L = math.sqrt((localData[nodeNumber][0] - localData[nodeNumber + 1][0]) ** 2 +
+                              (localData[nodeNumber][1] - localData[nodeNumber + 1][1]) ** 2)
+                jacobianTable.append(L / 2.0)
+            else:
+                L = math.sqrt((localData[nodeNumber][0] - localData[0][0]) ** 2
+                              + (localData[nodeNumber][1] - localData[0][1]) ** 2)
+                jacobianTable.append(L / 2.0)
+
+        return jacobianTable
 
 
 def test():
     net = net_4_elements(1.0/math.sqrt(3))
-    klasa = HBC()
+    klasa = Pmatrix()
     j = klasa.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
     print(j)
-    klasa.calculateHBC(net.edges_ksi_eta(0), [1, 1, 1, 1], j, 25.0)
+    klasa.calculateP(net.edges_ksi_eta(0), [1, 1, 0, 1], j, 300.0, 1200)
 
 
 if __name__ == "__main__":
