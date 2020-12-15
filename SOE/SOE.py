@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from stiffnessMatrix.HMatrix import *
 
+
 class SOE():
     def __init__(self) -> None:
         self.nodes = self.initHg()
@@ -15,6 +16,9 @@ class SOE():
         self.t = 0
         self.k = 0
         self.Jacobian_list = []
+        self.tau = 50
+        self.t0 = np.full(self.nodes, 100)
+        self.global_net = self.read()
 
     def read(self):
         path = r"data/data.txt"
@@ -81,6 +85,7 @@ class SOE():
 
                 H += H_bc
 
+
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):
                     self.Hg[elem[rowNumber]][elem[itemNumber]] += value
@@ -120,7 +125,7 @@ class SOE():
                 mask_glob.append(net["krawedzie"][nodeNumber])
 
             if mask_glob != [0.0, 0.0, 0.0, 0.0]:
-                print(f"Maska {mask_glob} dla {net_glob} dla elementu {nr}")
+                #print(f"Maska {mask_glob} dla {net_glob} dla elementu {nr}")
                 localNet = net_4_elements(1.0 / math.sqrt(3))
                 hbc = HBC()
                 jacobiany = hbc.jacobian(net_glob)
@@ -128,7 +133,6 @@ class SOE():
 
     def calculateP(self, c, t8):
         net = self.read()
-        print(net["wezly"])
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
             mask_glob = []
@@ -140,10 +144,79 @@ class SOE():
                 localNet = net_4_elements(1.0 / math.sqrt(3))
                 hbc = Pmatrix()
                 jacobiany = hbc.jacobian(net_glob)
-                P_local = hbc.calculateP(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c, t8)# to nie zależy dla delty
+                P_local = hbc.calculateP(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c, t8)  # to nie zależy dla delty
 
                 for number, _ in enumerate(P_local):
-                    self.Pg[elem[number]] = P_local[number]
+                    self.Pg[elem[number]] += P_local[number]
+    ## takie do gaussa
+    @staticmethod
+    def eliminacja(macierz_wejsciowa):
+        macierz = macierz_wejsciowa
+        wymiar_macierzy = macierz.shape
+        wiersze = wymiar_macierzy[0]
+        kolumny = wymiar_macierzy[1]
+
+        for a in range(1, wiersze):
+            for i in range(a, wiersze):
+                k = macierz[i][a - 1] / macierz[a - 1][a - 1]
+                # print(f"Dla iteracji {a} dla wiersza {i} mamy wartość {k}")
+                for j in range(a - 1, kolumny):
+                    element = macierz[i][j]
+                    macierz[i][j] = (element - (k * macierz[a - 1][j]))
+
+        return macierz
+    @staticmethod
+    def obliczanie(macierz_wejsciowa):
+        macierz = macierz_wejsciowa
+        wymiar_macierzy = macierz.shape
+        wiersze = wymiar_macierzy[0]
+        kolumny = wymiar_macierzy[1]
+
+        rozwiązanie = []
+        for i in reversed(range(0, wiersze)):
+            wynik = macierz[i, kolumny - 1]
+            for j in range(0, wiersze - i - 1):
+                wynik = wynik - (rozwiązanie[j] * macierz[i][kolumny - 2 - j])
+
+            wynik = (wynik / macierz[i, i])
+            rozwiązanie.append(wynik)
+
+        return (rozwiązanie)
+    #DODAWANKO I PO CZASIE CHODZONKO
+    def calculations(self):
+        C = self.Cg / self.tau
+        H = self.Hg + C
+
+
+        mnoz = np.matmul(C, self.t0)
+        P = self.Pg - mnoz
+        P = -1.0 * P
+
+
+        Probocze = [[i] for i in P]
+
+        ObH = np.append(H, Probocze, axis=1)
+        eleminacja = self.eliminacja(ObH)
+        wynik = self.obliczanie(eleminacja)
+        print("Wynik")
+
+        print(wynik)
+        self.t0 = wynik
+        x = []
+        y = []
+        color = []
+        for nr, i in enumerate(self.global_net["wezly"]):
+            x.append(i[0])
+            y.append(i[1])
+            color.append(wynik[nr])
+
+
+        return(pd.DataFrame({"x": x,
+                             "y": y,
+                             "t": color}))
+
+
+
 
     def drawStiffnessMatrix(self):
         H = pd.DataFrame(self.Hg)

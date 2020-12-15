@@ -171,9 +171,6 @@ class HBC:
 
             if edge:
                 N_matrix = np.zeros((4, 4))
-                #node1 = (ksi_eta_edges[number1])[0]
-                #node2 = (ksi_eta_edges[number1])[1]
-                #node = [node1, node2]
                 node = ksi_eta_edges[number1]
 
                 for iter in range(0, len(node)):
@@ -186,7 +183,6 @@ class HBC:
                         N[number1] = (1.0 - (node[iter])[1]) / 2.0
                         N[number2] = (1.0 + (node[iter])[1]) / 2.0
 
-                    #print(f"N looks like this {N}")
 
                     for i in range(0, 4):
                         for j in range(0, 4):
@@ -194,8 +190,7 @@ class HBC:
 
                 #print(N_matrix)
                 HBCforElement += N_matrix
-                #print("")
-        #print(f"HBC dla elementu : \n{HBCforElement}")
+
         return HBCforElement
 
 
@@ -203,7 +198,7 @@ class Pmatrix():
     def __init___(self):
         pass
 
-    @staticmethod
+
     def calculateP(self, ksi_eta_edges, mask, det_list, alfa, t8):
         PforElement = np.zeros(4)
         for maskNumber, i in enumerate(mask):
