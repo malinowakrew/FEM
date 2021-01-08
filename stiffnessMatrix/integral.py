@@ -12,7 +12,7 @@ class net_4_elements():
         return net
 
     def edges_ksi_eta(self, delta):
-        net = []
+        net = [] # TODO: make this calculate automatically
         return [[(-1.0/math.sqrt(3), -1.0), (1.0/math.sqrt(3), -1.0)],
                 [(-1.0, 1.0 / math.sqrt(3)), (-1.0, -1.0 / math.sqrt(3))],
                 [(1.0/math.sqrt(3), 1.0), (-1.0/math.sqrt(3), 1.0)],
@@ -35,6 +35,25 @@ class net_9_elements():
             for x in range(0, 3):
                 net.append([-delta + (x * delta), -delta + (y * delta)])
         return net
+
+    def edges_ksi_eta(self, delta):
+        #TODO: make this calculate automatically
+        a = math.sqrt(3.0/5.0)
+        b = 0
+        return [[(-a, -a), (b, -a), (a, -a)],
+                [(-a, a), (-a, b), (-a, -a)],
+                [(a, a), (b, a), (-a, a)],
+                [(a, -a), (a, b), (a, a)]]
+
+    def integral_3_edges(self, values, weight_1=5.0/9.0, weight_2=8.0/9.0):
+        result = 0
+        for point, value in enumerate(values):
+            if point in [0, 2]:
+                result += value * weight_1
+            if point in [1]:
+                result += values * weight_2
+
+        return result
 
     def integral_9_elements(self, function, weight_1, weight_2):
         net = self.net
@@ -80,6 +99,16 @@ class net_16_elements:
 
 
 #### PRÓBA ####
+def integral_3_edges(values, weight_1=5.0/9.0, weight_2=8.0/9.0):
+    result = 0
+    for point, value in enumerate(values):
+        if point in [0, 2]:
+            result += value * weight_1
+        if point in [1]:
+            result += value * weight_2
+
+    return result
+
 def integral_4_elements(values, weight):
     result = 0.0
     for numberNode, node in enumerate(values):

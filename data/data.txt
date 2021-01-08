@@ -1,9 +1,14 @@
-0.1
-0.1
-4
-4
-25.0
-4
-1200.0
--5*x**2*y+2*x*y**2+10
--2*x**2*y+2*x*y+4
+H:10.0
+W:10.0
+nH:16
+nW:16
+conductivity:25.0
+number of points in local net:4
+simulation step time:50
+stop time:50
+ambient temperature:1200.0
+specific heat:700.0
+density:7800.0
+alfa:300.0
+initial temperature:100.0
+style of plot:2

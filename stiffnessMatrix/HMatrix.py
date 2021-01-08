@@ -134,22 +134,23 @@ class StiffnessMatrix:
             H = integral_16_elements(H_map, 0.347855, 0.652145)
         return H
 
-class HBC:
 
-    def jacobian(self, localData: []):
-        jacobianTable = []
-        for nodeNumber, node in enumerate(localData):
-            if nodeNumber != len(localData) - 1:
-                L = math.sqrt((localData[nodeNumber][0]-localData[nodeNumber+1][0])**2 +
-                              (localData[nodeNumber][1]-localData[nodeNumber+1][1])**2)
-                jacobianTable.append(L / 2.0)
+class MatricesForElement:
+
+    def jacobian(self, local_data: []):
+        jacobian_table = []
+        for nodeNumber, node in enumerate(local_data):
+            if nodeNumber != len(local_data) - 1:
+                L = math.sqrt((local_data[nodeNumber][0] - local_data[nodeNumber + 1][0]) ** 2 +
+                              (local_data[nodeNumber][1] - local_data[nodeNumber + 1][1]) ** 2)
+                jacobian_table.append(L / 2.0)
             else:
-                L = math.sqrt((localData[nodeNumber][0] - localData[0][0]) ** 2
-                              + (localData[nodeNumber][1] - localData[0][1]) ** 2)
-                jacobianTable.append(L / 2.0)
+                L = math.sqrt((local_data[nodeNumber][0] - local_data[0][0]) ** 2
+                              + (local_data[nodeNumber][1] - local_data[0][1]) ** 2)
+                jacobian_table.append(L / 2.0)
+        return jacobian_table
 
-        return jacobianTable
-
+class HBC(MatricesForElement):
 
     def calculateHBC(self, ksi_eta_edges, mask, detList, alfa):
         HBCforElement = np.zeros((4, 4))
@@ -173,6 +174,7 @@ class HBC:
                 N_matrix = np.zeros((4, 4))
                 node = ksi_eta_edges[number1]
 
+                N_matrix_list = []
                 for iter in range(0, len(node)):
                     #ten podział prawdopodobnie nie jest konieczny
                     N = [0, 0, 0, 0]
@@ -183,21 +185,27 @@ class HBC:
                         N[number1] = (1.0 - (node[iter])[1]) / 2.0
                         N[number2] = (1.0 + (node[iter])[1]) / 2.0
 
-
+                    N_matrix_for_edge = np.zeros((4, 4))
                     for i in range(0, 4):
                         for j in range(0, 4):
-                            N_matrix[i][j] += N[i] * N[j] * alfa * detList[number1]  # bo na razie wagi to 1 właśnie :)
+                            N_matrix_for_edge[i][j] += N[i] * N[j] * alfa * detList[number1]  # bo na razie wagi to 1 właśnie :)
+                    N_matrix_list.append(N_matrix_for_edge)
 
-                #print(N_matrix)
+                if len(node) == 2:
+                    N_matrix = N_matrix_list[0] + N_matrix_list[1]
+                if len(node) == 3:
+                    N_matrix = integral_3_edges(N_matrix_list)
+                    # for point, value in enumerate(N_matrix_list):
+                    #     if point in [0, 2]:
+                    #         N_matrix += value * weight_1
+                    #     if point in [1]:
+                    #         N_matrix += value * weight_2
                 HBCforElement += N_matrix
 
         return HBCforElement
 
 
-class Pmatrix():
-    def __init___(self):
-        pass
-
+class Pmatrix(MatricesForElement):
 
     def calculateP(self, ksi_eta_edges, mask, det_list, alfa, t8):
         PforElement = np.zeros(4)
@@ -218,16 +226,14 @@ class Pmatrix():
                     number2 = 0
 
             if edge:
-                node1 = (ksi_eta_edges[number1])[0]
-                node2 = (ksi_eta_edges[number1])[1]
-                node = [node1, node2]
-
+                node = ksi_eta_edges[number1]
                 N1 = lambda ksi: (1.0-ksi) / 2.0
                 N2 = lambda ksi: (1.0+ksi) / 2.0
 
                 N_lambda = [N1, N2]
                 P_local = np.zeros(4)
-                for iter in range(0, 2):
+                P_N_list = []
+                for iter in range(0, len(node)):
                     N = np.zeros(4)
 
                     if number1 in [0, 2]:
@@ -237,37 +243,16 @@ class Pmatrix():
                         N[number1] = N_lambda[0]((node[iter])[1])
                         N[number2] = N_lambda[1]((node[iter])[1])
 
-                    P_local += 1.0 * N * det_list[maskNumber] * -1.0 * alfa * t8
+                    P_N_list.append(N)
+                if len(node) == 3:
+                    N_sum = integral_3_edges(P_N_list)
+                if len(node) == 2:
+                    N_sum = P_N_list[0] + P_N_list[1]
+
+                P_local += 1.0 * N_sum * det_list[maskNumber] * -1.0 * alfa * t8
 
                 PforElement += P_local
 
         #print(f"P dla elementu {mask}: \n{PforElement}")
         #print("\n")
         return PforElement
-
-    def jacobian(self, localData: []):
-        jacobianTable = []
-        for nodeNumber, node in enumerate(localData):
-            if nodeNumber != len(localData) - 1:
-                L = math.sqrt((localData[nodeNumber][0] - localData[nodeNumber + 1][0]) ** 2 +
-                              (localData[nodeNumber][1] - localData[nodeNumber + 1][1]) ** 2)
-                jacobianTable.append(L / 2.0)
-            else:
-                L = math.sqrt((localData[nodeNumber][0] - localData[0][0]) ** 2
-                              + (localData[nodeNumber][1] - localData[0][1]) ** 2)
-                jacobianTable.append(L / 2.0)
-
-        return jacobianTable
-
-
-def test():
-    net = net_4_elements(1.0/math.sqrt(3))
-    klasa = Pmatrix()
-    j = klasa.jacobian([(0.0, 0.0), (0.0333, 0.0), (0.0333, 0.0333), (0.0, 0.0333)])
-    print(j)
-    klasa.calculateP(net.edges_ksi_eta(0), [1, 1, 0, 1], j, 300.0, 1200)
-
-
-if __name__ == "__main__":
-    test()
-
