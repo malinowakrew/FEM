@@ -7,43 +7,77 @@ from stiffnessMatrix.HMatrix import *
 
 
 class SOE():
-    def __init__(self) -> None:
-        self.nodes = self.initHg()
+    def __init__(self, time_max, tau, k, t0, density, specific_heat, alfa, ambient_temperature, net_table, point_number,
+                 warming_gage,
+                 warming_specific_heat,
+                 warming_density,
+                 warming_conductivity_factor,
+                 air_specific_heat,
+                 air_density,
+                 air_conductivity_factor,
+                 brick_gage,
+                 brick_specific_heat,
+                 brick_density,
+                 brick_conductivity_factor
+                 ) -> None:
+        """
+        :param time_max: 
+        :param tau: 
+        :param k: 
+        :param t0: 
+        :param density: 
+        :param specific_heat: 
+        :param alfa: 
+        :param ambient_temperature: 
+        :param net_table: 
+        :param point_number: 
+        """
+        """
+        Creating a global net
+        """
+        self.global_net = net(net_table[0], net_table[1], int(net_table[2]), int(net_table[3]), warming_gage, brick_gage,
+                              warming_conductivity_factor,
+                              air_conductivity_factor,
+                              brick_conductivity_factor,
+                              warming_specific_heat,
+                              warming_density,
+                              air_specific_heat,
+                              air_density,
+                              brick_specific_heat,
+                              brick_density)
+        """
+        Values which must be read from data.txt file
+        """
+        self.nodes = self.init_nodes()
+        self.time_max = time_max
+        self.k = self.global_net["wspolczynnik_przewodzenia"]
+        self.tau = tau
+        self.t0 = np.full(self.nodes, t0)
+        self.density = self.global_net["density"]
+        self.specific_heat = self.global_net["specific heat"]
+        self.alfa = alfa
+        self.ambient_temperature = ambient_temperature
+        """
+        Initialization values H, C and P - global matrix for equation
+        """
         self.Hg = np.zeros((self.nodes, self.nodes))
-        self.Cg = np.zeros((self.nodes, self.nodes)) # do zmienienia :D
+        self.Cg = np.zeros((self.nodes, self.nodes))
         self.Pg = np.zeros(self.nodes)
-        self.net = self.initNet()
-        self.t = 0
-        self.k = 0
+
+        """
+        Jacobian list for all elements to provide calculate it multiple times
+        """
         self.Jacobian_list = []
-        self.tau = 50
-        self.t0 = np.full(self.nodes, 100)
-        self.global_net = self.read()
+        """
+        Data required to make a local net 
+        """
+        self.pointsNumber = point_number
+        self.local_net = self.initNet()
 
-    def read(self):
-        path = r"data/data.txt"
-        with open(path, "r") as file:
-            data = file.read()
-            file.close()
-
-        table = data.split("\n")
-
-        net_table = [float(element) for element in table[:4]]
-
-        s = net(net_table[0], net_table[1], int(net_table[2]), int(net_table[3]))
-
-        self.k = float(table[4])
-        self.pointsNumber = int(table[5])
-        self.t = float(table[6])
-        return s
-
-    def initHg(self):
-        net = self.read()
-        return(len(net["wezly"]))
+    def init_nodes(self):
+        return len(self.global_net["wezly"])
 
     def initNet(self):
-        net = self.read()
-
         if self.pointsNumber == 4:
             net_lok = net_4_elements(-1.0 / math.sqrt(3))
         elif self.pointsNumber == 9:
@@ -55,67 +89,83 @@ class SOE():
 
         return net_lok
 
-    def calculateHg(self, c):
-        net = self.read()
+    def calculate_hg(self):
+        net = self.global_net
+        c = self.alfa
+        """
+        Reading coordinates for every element and transform it to local net
+        """
         for nr, elem in enumerate(net["elementy"]):
-            net_glob = []
-            mask_glob = []
+            coordinates_of_element = []
+            mask_for_element = []
             for nodeNumber in elem:
-                net_glob.append(net["wezly"][nodeNumber])
-                mask_glob.append(net["krawedzie"][nodeNumber])
+                coordinates_of_element.append(net["wezly"][nodeNumber])
+                mask_for_element.append(net["krawedzie"][nodeNumber])
+                k = self.k[nodeNumber]
+                #k=self.k
 
-            #H = form(net_lok.net, net_glob, self.k)
-            #H
-            stiffnessMatrix = StiffnessMatrix(self.net.net, net_glob, self.k)
+            """
+            Creating local H matrix 
+            """
+            stiffnessMatrix = StiffnessMatrix(self.local_net.net, coordinates_of_element, k)
 
             matrix_ksi_eta = stiffnessMatrix.form()
             jacobian = stiffnessMatrix.Jacobian(matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
             self.Jacobian_list.append(jacobian)
             Ni = stiffnessMatrix.derivativeCalculate(jacobian, matrix_ksi_eta["matrix_eta"], matrix_ksi_eta["matrix_ksi"])
-            #print(Ni)
             H = stiffnessMatrix.localHcalculate(jacobian, Ni)
 
-            #H_bc
-            if mask_glob != [0.0, 0.0, 0.0, 0.0]:
+            """
+            Calculate H bc for edges of the element and add it to local H matrix
+            """
+            if mask_for_element != [0.0, 0.0, 0.0, 0.0]:
                 #print(f"Maska {mask_glob} dla {net_glob} dla elementu {nr}")
-                localNet = net_4_elements(1.0 / math.sqrt(3))
+                if len(self.local_net.net) in [4, 9]:
+                    localNet = self.local_net
+                else:
+                    localNet = net_4_elements(1.0 / math.sqrt(3))
                 hbc = HBC()
-                jacobiany = hbc.jacobian(net_glob)
-                H_bc = hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c) # to nie zależy dla delty
+                jacobians = hbc.jacobian(coordinates_of_element)
+                H_bc = hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_for_element, jacobians, self.alfa) # to nie zależy dla delty
 
                 H += H_bc
-
-
+                # print(H)
+        
+            """
+            Adding values to global H matrix for local ones
+            """
             for rowNumber, row in enumerate(H):
                 for itemNumber, value in enumerate(row):
                     self.Hg[elem[rowNumber]][elem[itemNumber]] += value
 
-    def calculateCg(self, c, ro):
-        net = self.read()
+        # print("H global")
+        # print(self.Hg)
+
+    def calculateCg(self):
+        """
+        Calculate C global matrix
+        :return: 
+        """
+        net = self.global_net
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
-            #print(f"Jakobiany dla punkty {nr} {self.Jacobian_list[nr]}")
-            C = CMatrixCalculate(self.net.net, c, ro, self.Jacobian_list[nr])
-            #print("Macierz P")
-            #print(P)
+
+            C = CMatrixCalculate(self.local_net.net, self.density[nodeNumber], self.specific_heat[nodeNumber], self.Jacobian_list[nr])
 
             for rowNumber, row in enumerate(C):
                 for itemNumber, value in enumerate(row):
                     self.Cg[elem[rowNumber]][elem[itemNumber]] += value
 
-        #Jakobiany zostaną zmienione
 
-        
-        """
-        for rowNumber, row in enumerate(H):
-            for itemNumber, value in enumerate(row):
-                self.Hg[elem[rowNumber]][elem[itemNumber]] += value
-
-        """
     def calculateHBC(self, c):
-        net = self.read()
+        """
+        Using only for test
+        :param c: 
+        :return: 
+        """
+        net = self.global_net
         print(net["wezly"])
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
@@ -131,8 +181,10 @@ class SOE():
                 jacobiany = hbc.jacobian(net_glob)
                 print(hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c)) # to nie zależy dla delty
 
-    def calculateP(self, c, t8):
-        net = self.read()
+    def calculateP(self):
+        net = self.global_net
+        c = self.alfa
+        t8 = self.ambient_temperature
         for nr, elem in enumerate(net["elementy"]):
             net_glob = []
             mask_glob = []
@@ -141,81 +193,91 @@ class SOE():
                 mask_glob.append(net["krawedzie"][nodeNumber])
 
             if mask_glob != [0.0, 0.0, 0.0, 0.0]:
-                localNet = net_4_elements(1.0 / math.sqrt(3))
+                if len(self.local_net.net) in [4]:
+                    localNet = self.local_net
+                else:
+                    localNet = net_4_elements(1.0 / math.sqrt(3))
                 hbc = Pmatrix()
                 jacobiany = hbc.jacobian(net_glob)
                 P_local = hbc.calculateP(localNet.edges_ksi_eta(0), mask_glob, jacobiany, c, t8)  # to nie zależy dla delty
 
                 for number, _ in enumerate(P_local):
                     self.Pg[elem[number]] += P_local[number]
+
+        # print(self.Pg)
     ## takie do gaussa
     @staticmethod
-    def eliminacja(macierz_wejsciowa):
-        macierz = macierz_wejsciowa
-        wymiar_macierzy = macierz.shape
-        wiersze = wymiar_macierzy[0]
-        kolumny = wymiar_macierzy[1]
+    def elimination(matrix_in):
+        matrix_out = matrix_in
+        shape_matrix = matrix_out.shape
+        row = shape_matrix[0]
+        column = shape_matrix[1]
 
-        for a in range(1, wiersze):
-            for i in range(a, wiersze):
-                k = macierz[i][a - 1] / macierz[a - 1][a - 1]
-                # print(f"Dla iteracji {a} dla wiersza {i} mamy wartość {k}")
-                for j in range(a - 1, kolumny):
-                    element = macierz[i][j]
-                    macierz[i][j] = (element - (k * macierz[a - 1][j]))
+        for a in range(1, row):
+            for i in range(a, row):
+                k = matrix_out[i][a - 1] / matrix_out[a - 1][a - 1]
+                for j in range(a - 1, column):
+                    element = matrix_out[i][j]
+                    matrix_out[i][j] = (element - (k * matrix_out[a - 1][j]))
 
-        return macierz
+        return matrix_out
     @staticmethod
-    def obliczanie(macierz_wejsciowa):
-        macierz = macierz_wejsciowa
-        wymiar_macierzy = macierz.shape
-        wiersze = wymiar_macierzy[0]
-        kolumny = wymiar_macierzy[1]
+    def gauss_calculations(matrix_in):
+        matrix_out = matrix_in
+        shape_matrix = matrix_out.shape
+        row = shape_matrix[0]
+        column = shape_matrix[1]
 
-        rozwiązanie = []
-        for i in reversed(range(0, wiersze)):
-            wynik = macierz[i, kolumny - 1]
-            for j in range(0, wiersze - i - 1):
-                wynik = wynik - (rozwiązanie[j] * macierz[i][kolumny - 2 - j])
+        solution_vector = []
+        for i in reversed(range(0, row)):
+            temporary_solution = matrix_out[i, column - 1]
+            for j in range(0, row - i - 1):
+                temporary_solution = temporary_solution - (solution_vector[j] * matrix_out[i][column - 2 - j])
 
-            wynik = (wynik / macierz[i, i])
-            rozwiązanie.append(wynik)
+            temporary_solution = (temporary_solution / matrix_out[i, i])
+            solution_vector.append(temporary_solution)
 
-        return (rozwiązanie)
+        return solution_vector
+
     #DODAWANKO I PO CZASIE CHODZONKO
-    def calculations(self):
+    def calculations(self, nr):
         C = self.Cg / self.tau
         H = self.Hg + C
+        #TODO: make this out of this method
 
-
-        mnoz = np.matmul(C, self.t0)
-        P = self.Pg - mnoz
+        P = self.Pg - np.matmul(C, self.t0)
         P = -1.0 * P
+        print(P)
 
+        P_in_proper_shape = [[i] for i in P]
 
-        Probocze = [[i] for i in P]
+        H_matrix_with_free_vector = np.append(H, P_in_proper_shape, axis=1)
+        result = self.gauss_calculations(self.elimination(H_matrix_with_free_vector))
 
-        ObH = np.append(H, Probocze, axis=1)
-        eleminacja = self.eliminacja(ObH)
-        wynik = self.obliczanie(eleminacja)
-        print("Wynik")
+        # show results
+        print(f"Results {nr}")
+        print(max(result))
+        print(min(result))
 
-        print(wynik)
-        self.t0 = wynik
+        self.t0 = result
         x = []
         y = []
+        con = []
+        edges = []
+
         color = []
         for nr, i in enumerate(self.global_net["wezly"]):
             x.append(i[0])
             y.append(i[1])
-            color.append(wynik[nr])
-
+            color.append(result[nr])
+            con.append(self.global_net["wspolczynnik_przewodzenia"][nr])
+            edges.append(self.global_net["krawedzie"][nr])
 
         return(pd.DataFrame({"x": x,
                              "y": y,
-                             "t": color}))
-
-
+                             "t": color,
+                             "con": con,
+                             "edges": edges}))
 
 
     def drawStiffnessMatrix(self):
@@ -234,8 +296,4 @@ class SOE():
         plt.title("C Matrix")
         plt.show()
 
-    def drawNet(self):
-        for krotka in self.net.net:
-            plt.plot(krotka, 'bo')
-        plt.show()
 

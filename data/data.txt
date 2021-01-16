@@ -1,9 +1,25 @@
-0.1
-0.1
-4
-4
-25.0
-4
-1200.0
--5*x**2*y+2*x*y**2+10
--2*x**2*y+2*x*y+4
+H:0.08
+W:0.08
+nH:17
+nW:17
+conductivity:25.0
+number of points in local net:4
+simulation step time:70.0
+stop time:210.0
+ambient temperature:20.0
+specific heat:700.0
+density:7800.0
+alfa:300.0
+initial temperature:0.0
+style of plot:2
+warming_gage:0.0025
+warming_specific_heat:1500.0
+warming_density:30.0
+warming_conductivity_factor:0.032
+air_specific_heat:1008
+air_density:1.23
+air_conductivity_factor:0.025
+brick_gage:0.015
+brick_specific_heat:1460.0
+brick_density:900.0
+brick_conductivity_factor:0.14
