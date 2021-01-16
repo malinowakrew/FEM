@@ -7,7 +7,19 @@ from stiffnessMatrix.HMatrix import *
 
 
 class SOE():
-    def __init__(self, time_max, tau, k, t0, density, specific_heat, alfa, ambient_temperature, net_table, point_number)->None:
+    def __init__(self, time_max, tau, k, t0, density, specific_heat, alfa, ambient_temperature, net_table, point_number,
+                 warming_gage,
+                 warming_specific_heat,
+                 warming_density,
+                 warming_conductivity_factor,
+                 air_specific_heat,
+                 air_density,
+                 air_conductivity_factor,
+                 brick_gage,
+                 brick_specific_heat,
+                 brick_density,
+                 brick_conductivity_factor
+                 ) -> None:
         """
         :param time_max: 
         :param tau: 
@@ -23,7 +35,16 @@ class SOE():
         """
         Creating a global net
         """
-        self.global_net = net(net_table[0], net_table[1], int(net_table[2]), int(net_table[3]))
+        self.global_net = net(net_table[0], net_table[1], int(net_table[2]), int(net_table[3]), warming_gage, brick_gage,
+                              warming_conductivity_factor,
+                              air_conductivity_factor,
+                              brick_conductivity_factor,
+                              warming_specific_heat,
+                              warming_density,
+                              air_specific_heat,
+                              air_density,
+                              brick_specific_heat,
+                              brick_density)
         """
         Values which must be read from data.txt file
         """
@@ -32,8 +53,8 @@ class SOE():
         self.k = self.global_net["wspolczynnik_przewodzenia"]
         self.tau = tau
         self.t0 = np.full(self.nodes, t0)
-        self.density = density
-        self.specific_heat = specific_heat
+        self.density = self.global_net["density"]
+        self.specific_heat = self.global_net["specific heat"]
         self.alfa = alfa
         self.ambient_temperature = ambient_temperature
         """
@@ -105,7 +126,7 @@ class SOE():
                     localNet = net_4_elements(1.0 / math.sqrt(3))
                 hbc = HBC()
                 jacobians = hbc.jacobian(coordinates_of_element)
-                H_bc = hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_for_element, jacobians, c) # to nie zależy dla delty
+                H_bc = hbc.calculateHBC(localNet.edges_ksi_eta(0), mask_for_element, jacobians, self.alfa) # to nie zależy dla delty
 
                 H += H_bc
                 # print(H)
@@ -130,10 +151,8 @@ class SOE():
             net_glob = []
             for nodeNumber in elem:
                 net_glob.append(net["wezly"][nodeNumber])
-            #print(f"Jakobiany dla punkty {nr} {self.Jacobian_list[nr]}")
-            C = CMatrixCalculate(self.local_net.net, self.density, self.specific_heat, self.Jacobian_list[nr])
-            #print("Macierz P")
-            #print(P)
+
+            C = CMatrixCalculate(self.local_net.net, self.density[nodeNumber], self.specific_heat[nodeNumber], self.Jacobian_list[nr])
 
             for rowNumber, row in enumerate(C):
                 for itemNumber, value in enumerate(row):
@@ -224,6 +243,7 @@ class SOE():
     def calculations(self, nr):
         C = self.Cg / self.tau
         H = self.Hg + C
+        #TODO: make this out of this method
 
         P = self.Pg - np.matmul(C, self.t0)
         P = -1.0 * P
@@ -243,7 +263,7 @@ class SOE():
         x = []
         y = []
         con = []
-        egdes = []
+        edges = []
 
         color = []
         for nr, i in enumerate(self.global_net["wezly"]):
@@ -251,13 +271,13 @@ class SOE():
             y.append(i[1])
             color.append(result[nr])
             con.append(self.global_net["wspolczynnik_przewodzenia"][nr])
-            egdes.append(self.global_net["krawedzie"][nr])
+            edges.append(self.global_net["krawedzie"][nr])
 
         return(pd.DataFrame({"x": x,
                              "y": y,
                              "t": color,
                              "con": con,
-                             "egdes": egdes}))
+                             "edges": edges}))
 
 
     def drawStiffnessMatrix(self):

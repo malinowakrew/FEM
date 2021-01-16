@@ -109,8 +109,6 @@ class StiffnessMatrix:
             det = matrix_Jakobian[1, 1] * matrix_Jakobian[0, 0] - matrix_Jakobian[1, 0] * matrix_Jakobian[0, 1]
             lista_wyznacznikow_Jakkobianow.append(det)
 
-        #print(lista_wyznacznikow_Jakkobianow)
-
         for pkt in range(0, self.size_of_local_data):
             H_pkt_x = np.zeros((4, 4))
             H_pkt_y = np.zeros((4, 4))
@@ -122,15 +120,13 @@ class StiffnessMatrix:
                     H_pkt_y[i][j] = Ni_y_pkt[i] * Ni_y_pkt[j] * self.k * lista_wyznacznikow_Jakkobianow[pkt]
 
             H_map.append(H_pkt_y + H_pkt_x)
-            #print(f"H lokalne dla punktu {pkt}")
-            #print(H_pkt_y+H_pkt_x)
 
         H = np.zeros((4, self.size_of_local_data))
-        if (self.size_of_local_data == 4):
+        if self.size_of_local_data == 4:
             H = integral_4_elements(H_map, 1.0)
-        if (self.size_of_local_data == 9):
+        if self.size_of_local_data == 9:
             H = integral_9_elements(H_map, 5.0 / 9.0, 8.0 / 9.0)
-        if (self.size_of_local_data == 16):
+        if self.size_of_local_data == 16:
             H = integral_16_elements(H_map, 0.347855, 0.652145)
         return H
 
@@ -176,7 +172,7 @@ class HBC(MatricesForElement):
 
                 N_matrix_list = []
                 for iter in range(0, len(node)):
-                    #ten podział prawdopodobnie nie jest konieczny
+
                     N = [0, 0, 0, 0]
                     if number1 in [0, 2]:
                         N[number1] = (1.0 - (node[iter])[0]) / 2.0
@@ -195,11 +191,7 @@ class HBC(MatricesForElement):
                     N_matrix = N_matrix_list[0] + N_matrix_list[1]
                 if len(node) == 3:
                     N_matrix = integral_3_edges(N_matrix_list)
-                    # for point, value in enumerate(N_matrix_list):
-                    #     if point in [0, 2]:
-                    #         N_matrix += value * weight_1
-                    #     if point in [1]:
-                    #         N_matrix += value * weight_2
+
                 HBCforElement += N_matrix
 
         return HBCforElement
@@ -249,7 +241,7 @@ class Pmatrix(MatricesForElement):
                 if len(node) == 2:
                     N_sum = P_N_list[0] + P_N_list[1]
 
-                P_local += 1.0 * N_sum * det_list[maskNumber] * -1.0 * alfa * t8
+                P_local += N_sum * det_list[maskNumber] * -1.0 * alfa * t8
 
                 PforElement += P_local
 
